@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Runway Command (Standalone)</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin:0; font-family: Inter, system-ui, sans-serif; background:#101113; color:#f2f2f2; }
+    .app { max-width:430px; margin:0 auto; min-height:100vh; padding:14px; background:linear-gradient(#101113,#171a1f); }
+    h1 { margin:0; letter-spacing:.04em; }
+    .sub { margin:4px 0 12px; color:#8f98a8; font-size:13px; }
+    .tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px; }
+    button, select, input, textarea, a { background:#1a1f26; color:#efefef; border:1px solid #383d47; border-radius:8px; padding:9px; font:inherit; text-decoration:none; }
+    .tab { font-size:11px; font-weight:700; }
+    .active { background:#323741; border-color:#677188; }
+    .stack { display:grid; gap:9px; }
+    .card { background:#171a21; border:1px solid #2d3037; border-radius:12px; padding:10px; }
+    .quote{ border-left:3px solid #68758f; }
+    .warn{ border-left:3px solid #a35a5a; }
+    .night{ border-left:3px solid #5975a4; }
+    .broken{ border-left:3px solid #998751; }
+    .day-title { font-size:32px; margin:0; }
+    .mentor{ text-transform:uppercase; color:#9ba5bb; font-size:12px; margin:0 0 4px; }
+    .theme{ font-weight:800; color:#d0d8ea; }
+    .row{ display:grid; grid-template-columns:auto 54px 1fr; gap:6px; align-items:start; padding:6px 0; border-bottom:1px solid #252830; }
+    .time{ color:#9ca7b8; font-family: ui-monospace,monospace; }
+    .done{ text-decoration:line-through; color:#6c7583; }
+    .line{ display:flex; gap:6px; }
+    label{ display:grid; gap:4px; }
+    textarea{ min-height:90px; }
+    ul,ol{ margin:4px 0 0; padding-left:18px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>Runway Command</h1>
+  <div class="sub">Standalone phone file (no install/build needed)</div>
+  <div class="tabs" id="tabs"></div>
+  <main id="view"></main>
+</div>
+<script>
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const NIGHT=["fiction / story reading","light manga/comic reading for meetup","5 meetup questions","AI-assisted admin message","pack bag","clothes for tomorrow","10-line journal","music listening only","calligraphy line practice max 10 min"];
+const BAD=["philosophy essays","AI/robotics deep learning","coding","dating analysis","WhatsApp surveillance","Tanya/Angelo checking","sex panic research","long political/AI arguments"];
+const BROKEN=["Move body for 30 min.","Leave house for 2 hours.","Do the day's main field badly but honestly.","Night Blade only."];
+const DEFAULT=[
+["Monday","Adult Command / Driving / Money","Caesar","Order first. A man who cannot order his day cannot command his life.","Driver’s license = mobility, adulthood, confidence. PWD/admin = survival money and breathing room.",["8:00 Wake. No phone spiral.","8:30 Gym: weights — chest / back / legs.","10:00 Shower + leave house.","11:00 Driver’s license block.","12:00 Driving logistics.","1:00 PWD / money / admin block.","2:00 Adult systems block.","3:00 BCIT logistics.","4:00 Weekly command map.","5:00 Close day. Home or light evening.","9:30 OMAD / night meal.","10:00 Night Blade: easy admin with AI or fiction/story.","11:30 Shutdown.","12:00 Bed target."]],
+["Tuesday","Library / Meetup / Meditation","Marcus","Do the duty in front of you. Do not decorate it with fear.","Tuesday is the day of the room. Hold the room. Do not perform for the room.",["8:00 Wake.","8:30 Leave for library.","9:10 Book room.","9:15 Stay at library. This is the worksite.","10:00 Meetup reading block.","11:00 Meetup reading continues.","12:00 Event questions.","1:00 Group growth/admin.","2:00 Reading / light prep.","3:00 Book reading meetup / reading block.","4:00 Book reading continues if scheduled.","5:00 Meditation meetup preparation.","6:00 Meditation meetup.","8:00 Post-meetup conversation max 15–20 min.","8:30 Travel home.","9:30 OMAD / night meal.","10:00 Night Blade: 5 meditation notes or 5 lines journal.","11:30 Shutdown.","12:00 Bed target."]],
+["Wednesday","Robotics / AI / Future Money","Napoleon","The future belongs to the man who concentrates his force before others even wake.","Robotics is the bridge out. It gives skill, money, adulthood, and a future where life is not just feelings.",["8:00 Wake.","8:30 Gym: boxing/cardio.","10:00 Shower + leave house.","11:00 Robotics block 1.","12:00 Robotics block 2.","1:00 AI tools block.","2:00 Mini-build block.","3:00 BCIT prep.","4:00 Write what I learned in 10 bullets.","5:00 Travel / prepare for temple.","6:40 Buddhist temple teaching.","8:40 Travel home.","9:45 OMAD / night meal.","10:15 Night Blade: temple reflection or fiction reading.","11:30 Shutdown.","12:00 Bed target."]],
+["Thursday","Writing / Book / Voice","Musashi","One cut. Not ten swings. One cut done cleanly.","The book is proof that the inner world can become real. Pages, not fantasy.",["8:00 Wake.","8:30 Gym: weights — shoulders / arms / core.","10:00 Shower + leave house.","11:00 Writing block 1.","12:00 Writing block 2.","1:00 Writing block 3.","2:00 Edit lightly.","3:00 Next-scene outline.","4:00 Book admin.","5:00 Stop. Evening open.","9:30 OMAD / night meal if home.","10:00 Night Blade: fiction or 10 lines of tomorrow’s scene.","11:30 Shutdown.","12:00 Bed target."]],
+["Friday","Music / Calligraphy / Beauty","Venus-Mars","Beauty is not decoration. Beauty is force given shape.","Friday keeps the artist alive. Taste, touch, sound, line.",["8:00 Wake.","8:30 Gym: mobility + lighter cardio.","10:00 Shower + leave house.","11:00 Music block 1.","12:00 Music block 2.","1:00 Music block 3.","2:00 Calligraphy practice.","3:00 Calligraphy or visual design/poster work.","4:00 Weekend prep.","5:00 Close.","9:30 OMAD / night meal if home.","10:00 Night Blade: listen to music draft or light fiction.","11:30 Shutdown.","12:00 Bed target."]],
+["Saturday","Long Body / Date Field / Style","Napoleon","Morale is a weapon. Dress, move, and act like the campaign matters.","Saturday is body and presence. A date is not a court trial.",["8:00 Wake.","8:30 Long run / marathon prep.","10:30 Shower.","11:00 Light work outside if needed.","12:00 Continue prep or style/grooming errands.","1:00 Clothes, haircut, laundry, grooming, dating presentation.","2:00 Light reading / event planning.","3:00 Open block.","4:00 Prepare for date or evening.","5:00 Date / social / event lane.","9:30 OMAD / night meal if home.","10:00 Night Blade: fiction, shower, no sex panic research.","11:30 Shutdown.","12:00 Bed target."]],
+["Sunday","Meetup Performance / Community / Optional Date","Caesar","The forum belongs to the man who can stand in it without begging for approval.","Sunday is performance, not preparation. You are the host.",["8:00 Wake.","8:30 Shower, clothes, bag, notes.","9:00 Final review.","10:00 Travel.","11:00 Meetup block begins.","1:00 Meetup / social / discussion.","3:00 Meetup / second event.","5:00 Final meetup / close.","6:00 Optional date or home recovery.","9:30 OMAD / night meal.","10:00 Night Blade: 5 bullet meetup review.","11:30 Shutdown.","12:00 Bed target."]]
+].map(([dayName,theme,mentor,quote,reminder,s])=>({id:dayName.toLowerCase(),dayName,theme,mentor,quote,reminder,scheduleItems:s.map(v=>{const a=v.split(' ');return {time:a.shift(),task:a.join(' ')}}),nightBladeOptions:NIGHT,dangerWarnings:BAD,brokenDayRules:BROKEN}));
+
+const K={plans:'rc_plans',checks:'rc_checks',date:'rc_date',settings:'rc_settings'};
+const todayName=()=>DAYS[(new Date().getDay()+6)%7];
+const load=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
+let state={page:'today',plans:load(K.plans,DEFAULT),checks:{},showBroken:false,editDay:todayName(),settings:load(K.settings,{resetHour24:4})};
+const savePlans=()=>localStorage.setItem(K.plans,JSON.stringify(state.plans));
+const saveChecks=()=>localStorage.setItem(K.checks,JSON.stringify(state.checks));
+const logicalDate=()=>{const n=new Date(),d=new Date(n);if(n.getHours()<state.settings.resetHour24)d.setDate(n.getDate()-1);return d.toISOString().split('T')[0];};
+(function resetIfNeeded(){const d=logicalDate();if(localStorage.getItem(K.date)!==d){localStorage.setItem(K.date,d);state.checks={};saveChecks();}else state.checks=load(K.checks,{})})();
+
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+function setPage(p){state.page=p;render();}
+function plan(day){return state.plans.find(p=>p.dayName===day)}
+function renderTabs(){document.getElementById('tabs').innerHTML=['today','week','edit','settings'].map(p=>`<button class="tab ${state.page===p?'active':''}" onclick="setPage('${p}')">${p.toUpperCase()}</button>`).join('');}
+function toggleCheck(dayId,i){state.checks[dayId]=state.checks[dayId]||{};state.checks[dayId][i]=!state.checks[dayId][i];saveChecks();render();}
+function changeEditDay(d){state.editDay=d;render();}
+function saveDay(){const p=plan(state.editDay);p.theme=v('ed_theme');p.mentor=v('ed_mentor');p.quote=v('ed_quote');p.reminder=v('ed_reminder');p.scheduleItems=v('ed_schedule').split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{const a=line.split(' ');return {time:a.shift(),task:a.join(' ')}});savePlans();alert('Saved.');render();}
+function v(id){return document.getElementById(id).value}
+function resetDefaults(){if(confirm('Reset all days to default?')){state.plans=JSON.parse(JSON.stringify(DEFAULT));savePlans();render();}}
+function setResetHour(n){state.settings.resetHour24=Number(n);localStorage.setItem(K.settings,JSON.stringify(state.settings));document.getElementById('rh').textContent=n;}
+function forceReset(){state.checks={};saveChecks();alert('Checkboxes reset.');render();}
+function toggleBroken(){state.showBroken=!state.showBroken;render();}
+
+function render(){renderTabs(); const view=document.getElementById('view');
+if(state.page==='today'){const p=plan(todayName()), c=state.checks[p.id]||{};view.innerHTML=`<section class='stack'>
+<h2 class='day-title'>${esc(p.dayName)}</h2>
+<article class='card quote'><p class='mentor'>Mentor: ${esc(p.mentor)}</p><p>“${esc(p.quote)}”</p></article>
+<article class='card'><h3>Main Mission</h3><p class='theme'>${esc(p.theme)}</p><p>${esc(p.reminder)}</p></article>
+<article class='card warn'><h3>Danger Warning</h3><ul>${p.dangerWarnings.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></article>
+<article class='card'><h3>Hour-by-hour tasks</h3>${p.scheduleItems.map((it,i)=>`<label class='row'><input type='checkbox' ${c[i]?'checked':''} onchange='toggleCheck("${p.id}",${i})'><span class='time'>${esc(it.time)}</span><span class='${c[i]?'done':''}'>${esc(it.task)}</span></label>`).join('')}</article>
+<article class='card night' id='night-blade'><h3>Night Blade</h3><ul>${p.nightBladeOptions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></article>
+<div class='line'><button onclick='toggleBroken()'>Broken Day Mode</button><a href='#night-blade'>Night Blade Jump</a></div>
+${state.showBroken?`<article class='card broken'><h3>Broken Day Fallback</h3><ol>${p.brokenDayRules.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></article>`:''}
+</section>`;return;}
+if(state.page==='week'){view.innerHTML=`<section class='stack'><h2>Week Overview</h2>${DAYS.map(d=>{const p=plan(d);return `<article class='card'><h3>${esc(p.dayName)}</h3><p class='theme'>${esc(p.theme)}</p><p><b>${esc(p.mentor)}:</b> ${esc(p.quote)}</p></article>`}).join('')}</section>`;return;}
+if(state.page==='edit'){const p=plan(state.editDay);view.innerHTML=`<section class='stack'><h2>Edit Schedule</h2><div class='line'><select onchange='changeEditDay(this.value)'>${DAYS.map(d=>`<option ${d===state.editDay?'selected':''}>${d}</option>`).join('')}</select><button onclick='resetDefaults()'>Reset week defaults</button></div><article class='card'><label>Theme<input id='ed_theme' value='${esc(p.theme)}'></label><label>Mentor<input id='ed_mentor' value='${esc(p.mentor)}'></label><label>Quote<textarea id='ed_quote'>${esc(p.quote)}</textarea></label><label>Reminder<textarea id='ed_reminder'>${esc(p.reminder)}</textarea></label><label>Schedule (one line: time task)<textarea id='ed_schedule' rows='14'>${esc(p.scheduleItems.map(it=>it.time+' '+it.task).join('\n'))}</textarea></label><button onclick='saveDay()'>Save day</button></article></section>`;return;}
+view.innerHTML=`<section class='stack'><h2>Settings</h2><article class='card'><label>Daily checkbox reset hour: <span id='rh'>${state.settings.resetHour24}</span>:00<input type='range' min='0' max='12' value='${state.settings.resetHour24}' oninput='setResetHour(this.value)'></label><button onclick='forceReset()'>Force reset checkboxes now</button></article><article class='card'><h3>How to use right now</h3><p>This file runs directly in your phone browser. Bookmark it, or save/share to Files and reopen anytime.</p></article></section>`;
+}
+render();
+</script>
+</body>
+</html>

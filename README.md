@@ -11,6 +11,14 @@ npm run dev -- --host
 
 Open the shown local network URL on your phone (same Wi-Fi), then add to home screen.
 
+## Zero-setup phone-only file
+
+If you only have a phone and want to run immediately, use `runway-command-mobile.html`:
+
+1. Download/open the file in your mobile browser.
+2. It runs with no build tools, no server, and uses `localStorage`.
+3. Bookmark it for quick access.
+
 ## Build for production
 
 ```bash
